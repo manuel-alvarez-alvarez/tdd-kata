@@ -1,0 +1,41 @@
+buildscript {
+    ext {
+        springBootVersion = '1.4.1.RELEASE'
+        gradleWraperVersion = '3.1'
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'spring-boot'
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Camden.RELEASE'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+group = 'es.manuel.tdd'
+version = '0.0.1-SNAPSHOT'
+
+dependencies {
+    compile 'org.springframework.boot:spring-boot-devtools'
+    compile 'org.springframework.cloud:spring-cloud-starter-eureka-server'
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = gradleWraperVersion
+}
