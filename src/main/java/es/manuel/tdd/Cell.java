@@ -13,8 +13,8 @@ import static java.lang.Character.toLowerCase;
  */
 public class Cell {
 
-    private static final char ALIVE_CELL = 'x';
-    private static final char DEATH_CELL = '_';
+    private static final char ALIVE_CELL = 'O';
+    private static final char DEATH_CELL = '.';
     private static final String COLUMN_SEPARATOR = "";
     private static final String ROW_SEPARATOR = "\n";
 
