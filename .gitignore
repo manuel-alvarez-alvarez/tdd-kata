@@ -1,6 +1,7 @@
 .gradle
 .idea
 build/
+bower_components/
 
 # Ignore Gradle GUI config
 gradle-app.setting

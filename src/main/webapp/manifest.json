@@ -1,0 +1,6 @@
+{
+  "name": "game-of-life",
+  "short_name": "game-of-life",
+  "start_url": "/",
+  "display": "standalone"
+}

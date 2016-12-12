@@ -1,0 +1,31 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+
+
+<dom-module id="game-of-life-app">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <iron-ajax url="/service" last-response="{{services}}" auto></iron-ajax>
+
+    <template is="dom-repeat" items="{{services}}">
+      <div># <span>{{item}}</span></div>
+    </template>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: 'game-of-life-app',
+      properties: {
+        pattern: {
+          type: String
+        }
+      }
+    });
+  </script>
+</dom-module>

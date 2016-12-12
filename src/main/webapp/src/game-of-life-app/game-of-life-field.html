@@ -1,0 +1,25 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="game-of-life-app">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+
+
+
+    </template>
+
+    <script>
+        Polymer({
+            is: 'game-of-life-field',
+            properties: {
+                pattern: {
+                    type: String
+                }
+            }
+        });
+    </script>
+</dom-module>

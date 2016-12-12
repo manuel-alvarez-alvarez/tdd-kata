@@ -36,6 +36,29 @@ dependencies {
     testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
 
+jar {
+    archiveName = 'game-of-life.jar'
+}
+
+task bower(type: Exec) {
+    workingDir "$project.rootDir/src/main/webapp"
+    commandLine 'cmd', '/c', 'bower install'
+}
+
+task polymer(type: Exec) {
+    workingDir "$project.rootDir/src/main/webapp"
+    commandLine 'cmd', '/c', 'polymer build'
+}
+
+task copyPolymer(type: Copy) {
+    from "$project.rootDir/src/main/webapp/build/unbundled"
+    into "$project.rootDir/build/resources/main/static"
+}
+
+polymer.dependsOn bower
+copyPolymer.dependsOn polymer
+processResources.finalizedBy copyPolymer
+
 task wrapper(type: Wrapper) {
     gradleVersion = gradleWraperVersion
 }
