@@ -1,0 +1,24 @@
+server:
+    port: 8080
+
+spring:
+    application:
+        name: game-of-life-client
+
+eureka:
+    client:
+        serviceUrl:
+            defaultZone: http://malvarez.cern.ch/game-of-life/eureka/
+
+---
+
+spring:
+    profiles: local
+
+server:
+    port: 8081
+
+eureka:
+    client:
+        serviceUrl:
+            defaultZone: http://localhost:8080/eureka/
