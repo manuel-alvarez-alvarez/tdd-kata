@@ -6,8 +6,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static java.lang.Character.toLowerCase;
-
 /**
  * Representation of a cell
  */
@@ -77,7 +75,7 @@ public class Cell {
         }
         String[] lines = world.split(ROW_SEPARATOR);
         return IntStream.range(0, lines.length)
-                .mapToObj(y -> IntStream.range(0, lines[y].length()).mapToObj(x -> toCell(x, y, toLowerCase(lines[y].charAt(x)))))
+                .mapToObj(y -> IntStream.range(0, lines[y].length()).mapToObj(x -> toCell(x, y, lines[y].charAt(x))))
                 .flatMap(Function.identity())
                 .filter(it -> it != null)
                 .collect(Collectors.toList());
@@ -103,6 +101,10 @@ public class Cell {
             case Cell.DEATH_CELL:
                 return Cell.dead(x, y);
             case ' ':
+                return null;
+            case '\r':
+                return null;
+            case '\n':
                 return null;
             default:
                 throw new IllegalArgumentException("Unknown cell state : " + state);
