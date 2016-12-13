@@ -3,10 +3,10 @@
   "main": "index.html",
   "dependencies": {
     "polymer": "Polymer/polymer#^1.7.0",
-    "iron-ajax": "PolymerElements/iron-ajax#^1.4.0"
+    "iron-ajax": "PolymerElements/iron-ajax#^1.4.0",
+    "three.js": "threejs#*"
   },
   "devDependencies": {
-    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
-    "three.js": "threejs#*"
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
   }
 }

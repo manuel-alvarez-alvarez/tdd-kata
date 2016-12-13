@@ -6,15 +6,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static java.lang.Character.toLowerCase;
-
 /**
  * Representation of a cell
  */
 public class Cell {
 
-    private static final char ALIVE_CELL = 'x';
-    private static final char DEATH_CELL = '_';
+    private static final char ALIVE_CELL = 'O';
+    private static final char DEATH_CELL = '.';
     private static final String COLUMN_SEPARATOR = "";
     private static final String ROW_SEPARATOR = "\n";
 
@@ -77,7 +75,7 @@ public class Cell {
         }
         String[] lines = world.split(ROW_SEPARATOR);
         return IntStream.range(0, lines.length)
-                .mapToObj(y -> IntStream.range(0, lines[y].length()).mapToObj(x -> toCell(x, y, toLowerCase(lines[y].charAt(x)))))
+                .mapToObj(y -> IntStream.range(0, lines[y].length()).mapToObj(x -> toCell(x, y, lines[y].charAt(x))))
                 .flatMap(Function.identity())
                 .filter(it -> it != null)
                 .collect(Collectors.toList());
@@ -103,6 +101,10 @@ public class Cell {
             case Cell.DEATH_CELL:
                 return Cell.dead(x, y);
             case ' ':
+                return null;
+            case '\r':
+                return null;
+            case '\n':
                 return null;
             default:
                 throw new IllegalArgumentException("Unknown cell state : " + state);

@@ -1,6 +1,6 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 
-<dom-module id="game-of-life-app">
+<dom-module id="game-of-life-field">
     <template>
         <style>
             :host {
@@ -8,18 +8,32 @@
             }
         </style>
 
-
+        <div>{{serviceId}}</div>
+        <div>{{cells}}</div>
 
     </template>
 
     <script>
         Polymer({
+
             is: 'game-of-life-field',
+
             properties: {
-                pattern: {
+
+                serviceId: {
                     type: String
+                },
+
+                cells: {
+                    type: String
+                },
+
+                error: {
+                    type: Boolean,
+                    value: false
                 }
             }
+
         });
     </script>
 </dom-module>

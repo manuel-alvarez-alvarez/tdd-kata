@@ -1,31 +1,75 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="game-of-life-field.html">
 
 
 <dom-module id="game-of-life-app">
-  <template>
-    <style>
-      :host {
-        display: block;
-      }
-    </style>
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
 
-    <iron-ajax url="/service" last-response="{{services}}" auto></iron-ajax>
+        <iron-ajax id="ajax" method="POST" content-type="text/plain" url="/service" handle-as="json"
+                   on-response="_onResponse"></iron-ajax>
 
-    <template is="dom-repeat" items="{{services}}">
-      <div># <span>{{item}}</span></div>
     </template>
 
-  </template>
+    <script>
+        Polymer({
+            is: 'game-of-life-app',
 
-  <script>
-    Polymer({
-      is: 'game-of-life-app',
-      properties: {
-        pattern: {
-          type: String
-        }
-      }
-    });
-  </script>
+            properties: {
+                cells: {
+                    type: String
+                },
+            },
+
+            ready: function () {
+                console.log(this);
+                this.animate();
+            },
+
+            animate: function () {
+                this.$.ajax.body = atob(this.cells);
+                this.$.ajax.generateRequest();
+            },
+
+            _onResponse: function (e, detail) {
+                var data = detail.xhr.response;
+                this.cells = data[""];
+                var root = Polymer.dom(this.root);
+
+                var fields = root.querySelector("game-of-life-field");
+                for (var field in fields) {
+                    var id = field.getAttribute("id");
+                    if (data.hasOwnProperty(id)) {
+                        delete data[id];
+                        this._populateField(field, id, data[id]);
+                    } else {
+                        root.removeChild(field);
+                    }
+                }
+
+                for (var serviceId in data) {
+                    var field = document.createElement("game-of-life-field");
+                    this._populateField(field, serviceId, data[serviceId]);
+                    root.appendChild(field);
+                }
+            },
+
+            _populateField: function (field, id, data) {
+                field.setAttribute("service-id", id);
+                field.setAttribute("error", data.error ? "true" : false);
+                if (!data.error) {
+                    field.setAttribute("cells", btoa(data));
+                }
+            },
+
+            _atob: function (value) {
+                return value == null ? null : atob(value);
+            }
+        });
+    </script>
 </dom-module>
