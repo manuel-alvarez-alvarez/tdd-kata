@@ -11,8 +11,9 @@
             }
         </style>
 
-        <iron-ajax id="ajax" method="POST" content-type="text/plain" url="/service" handle-as="json"
-                   on-response="_onResponse"></iron-ajax>
+        <iron-ajax id="ajax" method="GET" content-type="text/plain" url="/service" handle-as="json" on-response="_onServices"></iron-ajax>
+
+        <game-of-life-field cells="{{cells}}" />
 
     </template>
 
@@ -23,37 +24,36 @@
             properties: {
                 cells: {
                     type: String
-                },
+                }
             },
 
             ready: function () {
-                console.log(this);
-                this.animate();
+                this._fetchServices();
             },
 
-            animate: function () {
+            _fetchServices: function () {
                 this.$.ajax.body = atob(this.cells);
                 this.$.ajax.generateRequest();
             },
 
-            _onResponse: function (e, detail) {
-                var data = detail.xhr.response;
-                this.cells = data[""];
+            _onServices: function (e, detail) {
+                var field, i;
+                var services = detail.xhr.response;
                 var root = Polymer.dom(this.root);
-
-                var fields = root.querySelector("game-of-life-field");
-                for (var field in fields) {
-                    var id = field.getAttribute("id");
-                    if (data.hasOwnProperty(id)) {
-                        delete data[id];
-                        this._populateField(field, id, data[id]);
-                    } else {
-                        root.removeChild(field);
+                var fields = root.querySelectorAll("game-of-life-field");
+                for (i in fields) {
+                    field = fields[i];
+                    var id = field.getAttribute("service-id");
+                    if (id) {
+                        if (!data.hasOwnProperty(id)) {
+                            delete data[id];
+                        } else {
+                            root.removeChild(field);
+                        }
                     }
                 }
-
-                for (var serviceId in data) {
-                    var field = document.createElement("game-of-life-field");
+                for (var serviceId in services) {
+                    field = document.createElement("game-of-life-field");
                     this._populateField(field, serviceId, data[serviceId]);
                     root.appendChild(field);
                 }
@@ -65,10 +65,6 @@
                 if (!data.error) {
                     field.setAttribute("cells", btoa(data));
                 }
-            },
-
-            _atob: function (value) {
-                return value == null ? null : atob(value);
             }
         });
     </script>

@@ -4,12 +4,20 @@
     <template>
         <style>
             :host {
-                display: block;
+                display: inline-block;
             }
+
+            .container {
+                position: absolute;
+                z-index: 10;
+                top: 0;
+                left: 0;
+                background: black;
+            }
+
         </style>
 
-        <div>{{serviceId}}</div>
-        <div>{{cells}}</div>
+        <div id="container" class="container"></div>
 
     </template>
 
@@ -26,13 +34,161 @@
 
                 cells: {
                     type: String
-                },
+                }
+            },
 
-                error: {
-                    type: Boolean,
-                    value: false
+            attached: function () {
+                this._parseGeneration(atob(this.cells));
+                this._buildScene();
+                this._initializeCubes();
+                this._cubesLoop(this)();
+                this._animate(this)();
+            },
+
+            destroy: function () {
+
+            },
+
+            _parseGeneration: function (context) {
+                this.generation = [];
+                var array = context.split("\n");
+                for (var i in array) {
+                    this.generation[i] = array[i].trim().split("");
+                }
+                this.rows = this.generation.length;
+                this.cols = this.generation[0].length;
+            },
+
+            _buildScene: function () {
+                this.container = this.$.container;
+                var w = this.cols * 200;
+                var h = this.rows * 200;
+                this.container.style.width = w + 'px';
+                this.container.style.height = h + 'px';
+
+                this.scene = new THREE.Scene();
+
+                // Camera.
+                this.camera = new THREE.CombinedCamera(w, h, 40, 1, 10000, -2000, 10000);
+                this.theta = Math.cos(45 * Math.PI / 360);
+                this.alpha = Math.sin(45 * Math.PI / 360);
+                this.camera_x = 1400;
+                this.camera_y = 600;
+                this.camera_z = 1400;
+                this.cameraTarget = new THREE.Vector3(0,0,0);
+                this.camera.position.y = this.camera_y;
+                this.camera.position.z = this.camera_z * this.theta;
+                this.camera.position.x = this.camera_x * this.alpha;
+                this.camera.lookAt(this.cameraTarget);
+
+                this.scene.add(this.camera);
+
+                // Plane.
+                this.plane = new THREE.Mesh(
+                        new THREE.PlaneGeometry(4000, 4000, 200, 200),
+                        new THREE.MeshBasicMaterial({color: 0x222222, wireframe: true}));
+
+                this.plane.rotation.x = Math.PI / 2;
+
+                this.scene.add(this.plane);
+
+                // Renderer.
+                this.renderer = new THREE.WebGLRenderer({antialias: true});
+                this.renderer.setSize(w, h);
+                this.container.appendChild(this.renderer.domElement);
+            },
+
+            _initializeCubes: function () {
+                this.cubeGeo = new THREE.CubeGeometry(20, 20, 20);
+
+                this.cubeMaterial = new THREE.MeshBasicMaterial({
+                    shading: THREE.FlatShading,
+                    map: THREE.ImageUtils.loadTexture("/images/square-outline.png")
+                });
+
+                this.cubeMaterial.color.setHSV(0.6, 0.4, 1.0);
+                this.cubeMaterial.ambient = this.cubeMaterial.color;
+
+                this.cubesPool = [];
+                this.liveCubes = this._matrix(this.rows, this.cols);
+            },
+
+            _buildCube: function () {
+                var cube = new THREE.Mesh(this.cubeGeo, this.cubeMaterial);
+
+                cube.visible = false;
+
+                this.cubesPool.push(cube);
+
+                this.scene.add(cube);
+
+                return cube;
+            },
+
+            _matrix: function (rows, columns) {
+                var grid = new Array(rows);
+
+                for (var i = 0; i < rows; i++)
+                    grid[i] = new Array(columns);
+
+                return grid;
+            },
+
+            _cubesLoop: function (self) {
+                return function () {
+                    for (var y in self.generation) {
+                        for (var x in self.generation[y]) {
+                            switch (self.generation[y][x]) {
+                                case ".":
+                                    self._killCell([y, x]);
+                                    break;
+                                case "O":
+                                    self._drawCell([y, x]);
+                                    break;
+                            }
+                        }
+                    }
+                    setTimeout(self._cubesLoop(self), 100);
+                };
+            },
+
+            _animate: function (self) {
+                return function () {
+                    requestAnimationFrame(self._animate(self));
+                    self._render();
+                };
+
+            },
+
+            _render: function () {
+                this.renderer.render(this.scene, this.camera);
+            },
+
+            _getCube: function () {
+                return this.cubesPool.shift() || this._buildCube();
+            },
+
+            _drawCell: function (coords) {
+                var cube = this.liveCubes[coords[0]][coords[1]];
+                if (cube === undefined) {
+                    cube = this._getCube();
+                    cube.position.x = (coords[1] - this.cols / 2) * 20;
+                    cube.position.y = (coords[0] - this.rows / 2) * 20;
+                    cube.position.z = 10;
+                    cube.visible = true;
+                    this.liveCubes[coords[0]][coords[1]] = cube;
+                }
+            },
+
+            _killCell: function (coords) {
+                var cube = this.liveCubes[coords[0]][coords[1]];
+                if (cube !== undefined) {
+                    cube.visible = false;
+                    this.liveCubes[coords[0]][coords[1]] = undefined;
+                    this.cubesPool.push(cube);
                 }
             }
+
 
         });
     </script>
