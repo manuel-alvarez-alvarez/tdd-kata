@@ -61,8 +61,8 @@
 
             _buildScene: function () {
                 this.container = this.$.container;
-                var w = this.cols * 200;
-                var h = this.rows * 200;
+                var w = this.cols * 40;
+                var h = this.rows * 40;
                 this.container.style.width = w + 'px';
                 this.container.style.height = h + 'px';
 
@@ -70,12 +70,12 @@
 
                 // Camera.
                 this.camera = new THREE.CombinedCamera(w, h, 40, 1, 10000, -2000, 10000);
-                this.theta = Math.cos(45 * Math.PI / 360);
-                this.alpha = Math.sin(45 * Math.PI / 360);
-                this.camera_x = 1400;
-                this.camera_y = 600;
-                this.camera_z = 1400;
-                this.cameraTarget = new THREE.Vector3(0,0,0);
+                this.theta = 1; //Math.cos(45 * Math.PI / 360);
+                this.alpha = 1; //Math.sin(45 * Math.PI / 360);
+                this.camera_x = 0;
+                this.camera_y = 0;
+                this.camera_z = 100;
+                this.cameraTarget = new THREE.Vector3(0, 0, 0);
                 this.camera.position.y = this.camera_y;
                 this.camera.position.z = this.camera_z * this.theta;
                 this.camera.position.x = this.camera_x * this.alpha;
@@ -85,7 +85,7 @@
 
                 // Plane.
                 this.plane = new THREE.Mesh(
-                        new THREE.PlaneGeometry(4000, 4000, 200, 200),
+                        new THREE.PlaneGeometry(this.cols * 20, this.rows * 20, this.cols, this.rows),
                         new THREE.MeshBasicMaterial({color: 0x222222, wireframe: true}));
 
                 this.plane.rotation.x = Math.PI / 2;
@@ -100,37 +100,29 @@
 
             _initializeCubes: function () {
                 this.cubeGeo = new THREE.CubeGeometry(20, 20, 20);
-
                 this.cubeMaterial = new THREE.MeshBasicMaterial({
                     shading: THREE.FlatShading,
                     map: THREE.ImageUtils.loadTexture("/images/square-outline.png")
                 });
-
                 this.cubeMaterial.color.setHSV(0.6, 0.4, 1.0);
                 this.cubeMaterial.ambient = this.cubeMaterial.color;
-
                 this.cubesPool = [];
                 this.liveCubes = this._matrix(this.rows, this.cols);
             },
 
             _buildCube: function () {
                 var cube = new THREE.Mesh(this.cubeGeo, this.cubeMaterial);
-
                 cube.visible = false;
-
                 this.cubesPool.push(cube);
-
                 this.scene.add(cube);
-
                 return cube;
             },
 
             _matrix: function (rows, columns) {
                 var grid = new Array(rows);
-
-                for (var i = 0; i < rows; i++)
+                for (var i = 0; i < rows; i++) {
                     grid[i] = new Array(columns);
-
+                }
                 return grid;
             },
 
@@ -173,8 +165,9 @@
                 if (cube === undefined) {
                     cube = this._getCube();
                     cube.position.x = (coords[1] - this.cols / 2) * 20;
-                    cube.position.y = (coords[0] - this.rows / 2) * 20;
+                    cube.position.y = (this.rows / 2 - coords[0]) * 20;
                     cube.position.z = 10;
+                    console.log("(" + coords[1] + "," + coords[0] +") " + JSON.stringify(cube.position));
                     cube.visible = true;
                     this.liveCubes[coords[0]][coords[1]] = cube;
                 }
