@@ -4,20 +4,24 @@
     <template>
         <style>
             :host {
-                display: inline-block;
+                display: block;
             }
 
             .container {
-                position: absolute;
-                z-index: 10;
-                top: 0;
-                left: 0;
-                background: black;
+                background-color: #808080;
+                border: 1px solid white;
             }
 
         </style>
 
-        <div id="container" class="container"></div>
+        <iron-ajax id="ajax" method="POST" content-type="text/plain" url="/service" handle-as="json"
+                   on-response="_onNextGenerations"
+                   on-error="_onError"></iron-ajax>
+
+        {{serviceId}}
+        {{error}}
+
+        <div id="container" class$="{{_getClass()}}"></div>
 
     </template>
 
@@ -34,11 +38,28 @@
 
                 cells: {
                     type: String
+                },
+
+                cubeSize: {
+                    type: Number,
+                    value: 20
+                },
+
+                frames: {
+                    type: Number,
+                    value: 100
+                },
+
+                error: {
+                    type: Boolean,
+                    value: false
                 }
             },
 
             attached: function () {
-                this._parseGeneration(atob(this.cells));
+                this.current = atob(this.cells);
+                this.next = [];
+                this._parseGeneration();
                 this._buildScene();
                 this._initializeCubes();
                 this._cubesLoop(this)();
@@ -49,9 +70,13 @@
 
             },
 
-            _parseGeneration: function (context) {
+            _getClass: function() {
+              return "container " + (this.error ? "error" : "");
+            },
+
+            _parseGeneration: function () {
                 this.generation = [];
-                var array = context.split("\n");
+                var array = this.current.split("\n");
                 for (var i in array) {
                     this.generation[i] = array[i].trim().split("");
                 }
@@ -61,50 +86,51 @@
 
             _buildScene: function () {
                 this.container = this.$.container;
-                var w = this.cols * 40;
-                var h = this.rows * 40;
+                var w = this.cols * this.cubeSize;
+                var h = this.rows * this.cubeSize;
                 this.container.style.width = w + 'px';
                 this.container.style.height = h + 'px';
 
                 this.scene = new THREE.Scene();
 
                 // Camera.
-                this.camera = new THREE.CombinedCamera(w, h, 40, 1, 10000, -2000, 10000);
-                this.theta = 1; //Math.cos(45 * Math.PI / 360);
-                this.alpha = 1; //Math.sin(45 * Math.PI / 360);
+
+                var z = Math.min(w, h);
+                var fov = 2 * Math.atan(h / (2 * z));
+                this.camera = new THREE.PerspectiveCamera(fov * 180 / Math.PI, w / h, 1, 10000);
                 this.camera_x = 0;
                 this.camera_y = 0;
-                this.camera_z = 100;
+                this.camera_z = z + this.cubeSize;
                 this.cameraTarget = new THREE.Vector3(0, 0, 0);
                 this.camera.position.y = this.camera_y;
-                this.camera.position.z = this.camera_z * this.theta;
-                this.camera.position.x = this.camera_x * this.alpha;
+                this.camera.position.z = this.camera_z;
+                this.camera.position.x = this.camera_x;
                 this.camera.lookAt(this.cameraTarget);
 
                 this.scene.add(this.camera);
 
                 // Plane.
                 this.plane = new THREE.Mesh(
-                        new THREE.PlaneGeometry(this.cols * 20, this.rows * 20, this.cols, this.rows),
-                        new THREE.MeshBasicMaterial({color: 0x222222, wireframe: true}));
+                        new THREE.PlaneGeometry(this.cols * this.cubeSize, this.rows * this.cubeSize, this.cols, this.rows),
+                        new THREE.MeshBasicMaterial({ color: 0x999999, wireframe: true }));
 
                 this.plane.rotation.x = Math.PI / 2;
 
                 this.scene.add(this.plane);
 
                 // Renderer.
-                this.renderer = new THREE.WebGLRenderer({antialias: true});
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
                 this.renderer.setSize(w, h);
                 this.container.appendChild(this.renderer.domElement);
             },
 
             _initializeCubes: function () {
-                this.cubeGeo = new THREE.CubeGeometry(20, 20, 20);
+                this.cubeGeo = new THREE.CubeGeometry(this.cubeSize, this.cubeSize, this.cubeSize);
                 this.cubeMaterial = new THREE.MeshBasicMaterial({
                     shading: THREE.FlatShading,
                     map: THREE.ImageUtils.loadTexture("/images/square-outline.png")
                 });
-                this.cubeMaterial.color.setHSV(0.6, 0.4, 1.0);
+                this.cubeMaterial.color.setHex(0xffff00);
                 this.cubeMaterial.ambient = this.cubeMaterial.color;
                 this.cubesPool = [];
                 this.liveCubes = this._matrix(this.rows, this.cols);
@@ -113,7 +139,6 @@
             _buildCube: function () {
                 var cube = new THREE.Mesh(this.cubeGeo, this.cubeMaterial);
                 cube.visible = false;
-                this.cubesPool.push(cube);
                 this.scene.add(cube);
                 return cube;
             },
@@ -140,6 +165,16 @@
                             }
                         }
                     }
+                    if (self.next.length < self.frames / 2 && !self.$.ajax.loading) {
+                        self.$.ajax.url = "/service/" + (self.serviceId !== undefined ? btoa(self.serviceId) : "");
+                        self.$.ajax.body = self.current;
+                        self.$.ajax.params = { frames: self.frames };
+                        self.$.ajax.generateRequest();
+                    }
+                    if (self.next.length > 0) {
+                        self.current = self.next.shift();
+                        self._parseGeneration();
+                    }
                     setTimeout(self._cubesLoop(self), 100);
                 };
             },
@@ -164,10 +199,9 @@
                 var cube = this.liveCubes[coords[0]][coords[1]];
                 if (cube === undefined) {
                     cube = this._getCube();
-                    cube.position.x = (coords[1] - this.cols / 2) * 20;
-                    cube.position.y = (this.rows / 2 - coords[0]) * 20;
+                    cube.position.x = (coords[1] - this.cols / 2) * this.cubeSize + this.cubeSize / 2;
+                    cube.position.y = (this.rows / 2 - coords[0]) * this.cubeSize - this.cubeSize / 2;
                     cube.position.z = 10;
-                    console.log("(" + coords[1] + "," + coords[0] +") " + JSON.stringify(cube.position));
                     cube.visible = true;
                     this.liveCubes[coords[0]][coords[1]] = cube;
                 }
@@ -180,6 +214,18 @@
                     this.liveCubes[coords[0]][coords[1]] = undefined;
                     this.cubesPool.push(cube);
                 }
+            },
+
+            _onNextGenerations: function (e, data) {
+                var response = data.xhr.response;
+                for (var i in response.right) {
+                    this.next.push(response.right[i]);
+                }
+                this.error = false;
+            },
+
+            _onError: function(e, data) {
+                this.error = true;
             }
 
 

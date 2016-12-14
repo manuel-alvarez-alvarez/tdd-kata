@@ -45,12 +45,23 @@ public class GameOfLifeMaster {
                     .collect(Collectors.toList());
         }
 
-        @PostMapping(value = "/service/{serviceId}", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+        @PostMapping(value = "/service", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
         @ResponseBody
-        public Result invokeService(@RequestBody final String request, @PathVariable final String serviceId, @RequestParam final int frames) throws IOException {
+        public Result invokeDefaultService(@RequestBody final String request, @RequestParam final int frames) throws IOException {
             List<String> right = IntStream.range(0, frames).collect(
                     LinkedList::new,
-                    (list, i) -> list.add(Cell.toWorld(gameOfLife.nextGeneration(Cell.ofWorld(list.get(list.size() - 1))))),
+                    (list, i) -> list.add(Cell.toWorld(gameOfLife.nextGeneration(Cell.ofWorld(i == 0 ? request : list.get(list.size() - 1))))),
+                    LinkedList::addAll);
+            return Result.ok(right, right);
+        }
+
+        @PostMapping(value = "/service/{id}", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+        @ResponseBody
+        public Result invokeService(@RequestBody final String request, @PathVariable final String id, @RequestParam final int frames) throws IOException {
+            String serviceId = new String(Base64.getDecoder().decode(id));
+            List<String> right = IntStream.range(0, frames).collect(
+                    LinkedList::new,
+                    (list, i) -> list.add(Cell.toWorld(gameOfLife.nextGeneration(Cell.ofWorld(i == 0 ? request : list.get(list.size() - 1))))),
                     LinkedList::addAll);
             return Optional.ofNullable(eurekaServerContext.getRegistry().getApplication("GAME-OF-LIFE-CLIENT"))
                     .map(application -> application.getByInstanceId(serviceId))

@@ -4,7 +4,8 @@
   "dependencies": {
     "polymer": "Polymer/polymer#^1.7.0",
     "iron-ajax": "PolymerElements/iron-ajax#^1.4.0",
-    "three.js": "threejs#r49"
+    "three.js": "threejs#r49",
+    "semantic": "semantic-ui#^2.2.6"
   },
   "devDependencies": {
     "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"

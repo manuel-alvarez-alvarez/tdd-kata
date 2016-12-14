@@ -31,35 +31,35 @@ public class GameOfLifeTest {
 
     @Test
     public void anyLiveCellWithFewerThanTwoLiveNeighboursDies() {
-        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("x")));
+        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("O")));
 
         assertThat(world[0][0].isAlive(), equalTo(false));
     }
 
     @Test
     public void anyLiveCellWithTwoLiveNeighboursLives() {
-        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("xxx\n___\n___")));
+        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("OOO\n...\n...")));
 
         assertThat(world[0][1].isAlive(), equalTo(true));
     }
 
     @Test
     public void anyLiveCellWithThreeLiveNeighboursLives() {
-        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("xxx\n_x_\n___")));
+        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("OOO\n.O.\n...")));
 
         assertThat(world[0][1].isAlive(), equalTo(true));
     }
 
     @Test
     public void anyLiveCellWithMoreThanThreeLiveNeighboursDies() {
-        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("xxx\nxxx\n___")));
+        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("OOO\nOOO\n...")));
 
         assertThat(world[0][1].isAlive(), equalTo(false));
     }
 
     @Test
     public void anyDeadCellWithThreeLiveNeighboursResurrects() {
-        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("x_x\n_x_\n___")));
+        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("O.O\n.O.\n...")));
 
         assertThat(world[0][1].isAlive(), equalTo(true));
     }

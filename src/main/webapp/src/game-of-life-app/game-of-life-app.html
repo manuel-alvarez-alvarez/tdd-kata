@@ -1,5 +1,10 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="stylesheet" href="../../bower_components/semantic/dist/semantic.min.css">
+<script src="../../bower_components/three.js/build/Three.js"></script>
+<script src="../../bower_components/jquery/dist/jquery.min.js"></script>
+<script src="../../bower_components/semantic/dist/semantic.min.js"></script>
+
 <link rel="import" href="game-of-life-field.html">
 
 
@@ -11,9 +16,12 @@
             }
         </style>
 
-        <iron-ajax id="ajax" method="GET" content-type="text/plain" url="/service" handle-as="json" on-response="_onServices"></iron-ajax>
+        <iron-ajax id="ajax" method="GET" content-type="text/plain" url="/service" handle-as="json"
+                   on-response="_onServices"></iron-ajax>
 
-        <game-of-life-field cells="{{cells}}" />
+        <div id="container">
+            <game-of-life-field cells="{{cells}}"/>
+        </div>
 
     </template>
 
@@ -28,12 +36,16 @@
             },
 
             ready: function () {
-                this._fetchServices();
+                this.scopeSubtree(this.$.container, true);
+                this._fetchServices(this)();
             },
 
-            _fetchServices: function () {
-                this.$.ajax.body = atob(this.cells);
-                this.$.ajax.generateRequest();
+            _fetchServices: function (self) {
+                return function() {
+                    self.$.ajax.body = atob(self.cells);
+                    self.$.ajax.generateRequest();
+                    setTimeout(self._fetchServices(self), 1000);
+                };
             },
 
             _onServices: function (e, detail) {
@@ -41,29 +53,28 @@
                 var services = detail.xhr.response;
                 var root = Polymer.dom(this.root);
                 var fields = root.querySelectorAll("game-of-life-field");
+                var fieldMap = {};
                 for (i in fields) {
                     field = fields[i];
                     var id = field.getAttribute("service-id");
                     if (id) {
-                        if (!data.hasOwnProperty(id)) {
-                            delete data[id];
-                        } else {
-                            root.removeChild(field);
-                        }
+                        fieldMap[id] = field;
                     }
                 }
-                for (var serviceId in services) {
-                    field = document.createElement("game-of-life-field");
-                    this._populateField(field, serviceId, data[serviceId]);
-                    root.appendChild(field);
+                for (i in services) {
+                    var serviceId = services[i];
+                    field = fieldMap[id];
+                    if (!field) {
+                        field = document.createElement("game-of-life-field");
+                        field.setAttribute("service-id", serviceId);
+                        field.setAttribute("cells", this.cells);
+                        root.appendChild(field);
+                    } else {
+                        delete fieldMap[serviceId];
+                    }
                 }
-            },
-
-            _populateField: function (field, id, data) {
-                field.setAttribute("service-id", id);
-                field.setAttribute("error", data.error ? "true" : false);
-                if (!data.error) {
-                    field.setAttribute("cells", btoa(data));
+                for (field in fieldMap) {
+                    root.removeChild(fieldMap[field]);
                 }
             }
         });
