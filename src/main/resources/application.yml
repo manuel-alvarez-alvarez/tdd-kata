@@ -19,6 +19,9 @@ eureka:
 spring:
     profiles: local
 
+server:
+    contextPath: /game-of-life
+
 eureka:
     client:
         serviceUrl:

@@ -49,7 +49,7 @@
             }
         </style>
 
-        <iron-ajax id="ajax" method="POST" content-type="text/plain" url="/service" handle-as="json"
+        <iron-ajax id="ajax" method="POST" content-type="text/plain" url="/game-of-life/service" handle-as="json"
                    loading="{{loading}}"
                    on-response="_onNextGenerations"
                    on-error="_onError"></iron-ajax>
@@ -205,7 +205,7 @@
                 this.cubeGeo = new THREE.CubeGeometry(this.cubeSize, this.cubeSize, this.cubeSize);
                 this.cubeMaterial = new THREE.MeshBasicMaterial({
                     shading: THREE.FlatShading,
-                    map: THREE.ImageUtils.loadTexture("/images/square-outline.png")
+                    map: THREE.ImageUtils.loadTexture("/game-of-life/images/square-outline.png")
                 });
                 this.cubeMaterial.color.setHex(0xffff00);
                 this.cubeMaterial.ambient = this.cubeMaterial.color;
@@ -243,7 +243,7 @@
                         }
                     }
                     if (self.next.length < self.frames / 2 && !self.$.ajax.loading) {
-                        self.$.ajax.url = "/service/" + (self.serviceId !== undefined ? btoa(self.serviceId) : "");
+                        self.$.ajax.url = "/game-of-life/service/" + (self.serviceId !== undefined ? btoa(self.serviceId) : "");
                         self.$.ajax.body = self.nextRight.length === 0 ? self.currentRight : self.nextRight[self.next.length - 1];
                         self.$.ajax.params = { frames: self.frames, mode: self.mode };
                         self.$.ajax.generateRequest();

@@ -1,6 +1,6 @@
 FROM openjdk:8-jre-alpine
 
-ADD build/libs/config-server.jar game-of-life.jar
+ADD build/libs/game-of-life.jar game-of-life.jar
 
 RUN sh -c 'touch /game-of-life.jar'
 
