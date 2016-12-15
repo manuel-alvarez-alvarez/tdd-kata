@@ -1,12 +1,15 @@
 server:
     port: 8080
 
+server:
+    contextPath: /game-of-life
+
 eureka:
     client:
         registerWithEureka: false
         fetchRegistry: false
         serviceUrl:
-              defaultZone: http://malvarez.cern.ch/game-of-life/eureka/
+            defaultZone: http://malvarez.cern.ch:8080/game-of-life/eureka/
         healthcheck:
             enabled: true
     server:
@@ -19,10 +22,7 @@ eureka:
 spring:
     profiles: local
 
-server:
-    contextPath: /game-of-life
-
 eureka:
     client:
         serviceUrl:
-              defaultZone: http://localhost:8080/eureka/
+              defaultZone: http://localhost:8080/game-of-life/eureka/

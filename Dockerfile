@@ -8,4 +8,4 @@ EXPOSE 8080
 
 HEALTHCHECK CMD wget -s http://localhost:8080/health || exit 1
 
-CMD java -Dspring.profiles.active=docker -jar game-of-life.jar
+CMD java -jar game-of-life.jar

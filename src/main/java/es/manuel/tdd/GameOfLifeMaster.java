@@ -44,11 +44,6 @@ public class GameOfLifeMaster {
             this.instances = Collections.unmodifiableMap(applicationContext.getBeansOfType(GameOfLife.class));
         }
 
-        @GetMapping(value = "/", produces = MediaType.TEXT_HTML_VALUE)
-        public String index() {
-            return "redirect:index.html";
-        }
-
         @GetMapping(value = "/service", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
         @ResponseBody
         public List<InstanceInfo> findServices() {
