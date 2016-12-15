@@ -17,10 +17,10 @@ import static org.junit.Assert.assertThat;
  */
 @SpringBootTest(classes = GameOfLifeMaster.class)
 @RunWith(SpringRunner.class)
-public class GameOfLifeTest {
+public class GameOfLifeImplTest {
 
     @Autowired
-    private GameOfLife gameOfLife;
+    private GameOfLifeImpl gameOfLife;
 
     @Test
     public void anEmptyWorldStaysEmpty() {
@@ -31,37 +31,37 @@ public class GameOfLifeTest {
 
     @Test
     public void anyLiveCellWithFewerThanTwoLiveNeighboursDies() {
-        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("O")));
+        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("...\n.O.\n...")));
 
-        assertThat(world[0][0].isAlive(), equalTo(false));
+        assertThat(world[1][1].isAlive(), equalTo(false));
     }
 
     @Test
     public void anyLiveCellWithTwoLiveNeighboursLives() {
-        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("OOO\n...\n...")));
+        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("...\nOOO\n...")));
 
-        assertThat(world[0][1].isAlive(), equalTo(true));
+        assertThat(world[1][1].isAlive(), equalTo(true));
     }
 
     @Test
     public void anyLiveCellWithThreeLiveNeighboursLives() {
         Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("OOO\n.O.\n...")));
 
-        assertThat(world[0][1].isAlive(), equalTo(true));
+        assertThat(world[1][1].isAlive(), equalTo(true));
     }
 
     @Test
     public void anyLiveCellWithMoreThanThreeLiveNeighboursDies() {
         Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("OOO\nOOO\n...")));
 
-        assertThat(world[0][1].isAlive(), equalTo(false));
+        assertThat(world[1][1].isAlive(), equalTo(false));
     }
 
     @Test
     public void anyDeadCellWithThreeLiveNeighboursResurrects() {
-        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("O.O\n.O.\n...")));
+        Cell[][] world = toMatrix(gameOfLife.nextGeneration(Cell.ofWorld("OOO\n...\n...")));
 
-        assertThat(world[0][1].isAlive(), equalTo(true));
+        assertThat(world[1][1].isAlive(), equalTo(true));
     }
 
     private Cell[][] toMatrix(Collection<Cell> cells) {

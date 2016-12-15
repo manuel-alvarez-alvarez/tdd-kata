@@ -1,27 +1,74 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
 
 <dom-module id="game-of-life-field">
     <template>
         <style>
             :host {
-                display: block;
+                display: inline-block;
             }
 
             .container {
+                display: inline-block;
                 background-color: #808080;
-                border: 1px solid white;
+            }
+
+            .loading-block {
+                height: 4px;
+                background-color: #808080;
+            }
+
+            paper-progress {
+                --paper-progress-active-color: var(--paper-yellow-500);
             }
 
         </style>
 
+        <style is="custom-style">
+            paper-header-panel {
+                float: left;
+                margin: 5px;
+            }
+
+            .green .paper-toolbar-0 {
+                background-color: var(--paper-green-500);
+            }
+
+            .orange .paper-toolbar-0 {
+                background-color: var(--paper-orange-500);
+            }
+
+            .blue .paper-toolbar-0 {
+                background-color: var(--paper-blue-500);
+            }
+
+            .red .paper-toolbar-0 {
+                background-color: var(--paper-red-500);
+            }
+        </style>
+
         <iron-ajax id="ajax" method="POST" content-type="text/plain" url="/service" handle-as="json"
+                   loading="{{loading}}"
                    on-response="_onNextGenerations"
                    on-error="_onError"></iron-ajax>
 
-        {{serviceId}}
-        {{error}}
+        <paper-toast id="error"></paper-toast>
 
-        <div id="container" class$="{{_getClass()}}"></div>
+
+        <paper-header-panel class$="{{headerClass}}" mode="seamed">
+            <paper-toolbar id="toolbar">
+                <div>{{hostName}}</div>
+            </paper-toolbar>
+            <template is="dom-if" if="{{loading}}">
+                <paper-progress indeterminate class="slow" style="width: 100%"></paper-progress>
+            </template>
+            <template is="dom-if" if="{{!loading}}">
+                <div class="loading-block"></div>
+            </template>
+            <div id="container" class="container"></div>
+        </paper-header-panel>
 
     </template>
 
@@ -36,8 +83,18 @@
                     type: String
                 },
 
-                cells: {
+                hostName: {
                     type: String
+                },
+
+                cells: {
+                    type: String,
+                    observer: '_cellsChanged'
+                },
+
+                solution: {
+                    type: Boolean,
+                    value: false
                 },
 
                 cubeSize: {
@@ -47,19 +104,44 @@
 
                 frames: {
                     type: Number,
-                    value: 100
+                    value: 250
                 },
 
                 error: {
                     type: Boolean,
                     value: false
+                },
+
+                headerClass: {
+                    type: String
+                },
+
+                loading: {
+                    type: Boolean,
+                    notify: true,
+                    value: false
+                },
+
+                mode: {
+                    type: String
                 }
             },
 
-            attached: function () {
+            _cellsChanged: function() {
+                for (var y in this.liveCubes) {
+                    for (var x in this.liveCubes[y]) {
+                        this._killCell([y, x]);
+                    }
+                }
                 this.current = atob(this.cells);
+                this.currentRight = this.current;
                 this.next = [];
+                this.nextRight = [];
                 this._parseGeneration();
+            },
+
+            attached: function () {
+                this._cellsChanged();
                 this._buildScene();
                 this._initializeCubes();
                 this._cubesLoop(this)();
@@ -68,10 +150,6 @@
 
             destroy: function () {
 
-            },
-
-            _getClass: function() {
-              return "container " + (this.error ? "error" : "");
             },
 
             _parseGeneration: function () {
@@ -88,8 +166,7 @@
                 this.container = this.$.container;
                 var w = this.cols * this.cubeSize;
                 var h = this.rows * this.cubeSize;
-                this.container.style.width = w + 'px';
-                this.container.style.height = h + 'px';
+                this.style.height = (h + 74) + 'px';
 
                 this.scene = new THREE.Scene();
 
@@ -167,15 +244,17 @@
                     }
                     if (self.next.length < self.frames / 2 && !self.$.ajax.loading) {
                         self.$.ajax.url = "/service/" + (self.serviceId !== undefined ? btoa(self.serviceId) : "");
-                        self.$.ajax.body = self.current;
-                        self.$.ajax.params = { frames: self.frames };
+                        self.$.ajax.body = self.nextRight.length === 0 ? self.currentRight : self.nextRight[self.next.length - 1];
+                        self.$.ajax.params = { frames: self.frames, mode: self.mode };
                         self.$.ajax.generateRequest();
                     }
                     if (self.next.length > 0) {
                         self.current = self.next.shift();
+                        self.currentRight = self.nextRight.shift();
+                        self.headerClass = self.solution ? "green" : (self.current === self.currentRight ? "blue" : "orange");
                         self._parseGeneration();
                     }
-                    setTimeout(self._cubesLoop(self), 100);
+                    setTimeout(self._cubesLoop(self), self.error ? 5000 : 100);
                 };
             },
 
@@ -218,14 +297,21 @@
 
             _onNextGenerations: function (e, data) {
                 var response = data.xhr.response;
-                for (var i in response.right) {
-                    this.next.push(response.right[i]);
+                if (response.error == true) {
+                    this.error = true;
+                    this.headerClass = "red";
+                } else {
+                    for (var i in response.computed) {
+                        this.next.push(response.computed[i]);
+                        this.nextRight.push(response.right[i]);
+                    }
+                    this.error = false;
                 }
-                this.error = false;
             },
 
-            _onError: function(e, data) {
+            _onError: function () {
                 this.error = true;
+                this.headerClass = "red";
             }
 
 

@@ -12,10 +12,10 @@ import java.util.stream.Stream;
 import static es.manuel.tdd.Cell.dead;
 
 /**
- * Client for the game of life service
+ * Implementation of the game of life with wrapping
  */
-@Component(value = "no-wrap")
-public class GameOfLifeImpl implements GameOfLife {
+@Component(value = "wrap")
+public class GameOfLifeWrapImpl implements GameOfLife {
 
     @Override
     public final Collection<Cell> nextGeneration(final Collection<Cell> currentGeneration) {
@@ -34,7 +34,7 @@ public class GameOfLifeImpl implements GameOfLife {
             return Stream.empty();
         }
         List<Cell> list = new LinkedList<>(world);
-        int width = list.get(list.size() - 1).getX() + 1;
+        int width = list.stream().mapToInt(Cell::getX).max().orElse(0) + 1;
         int height = list.size() / width;
 
         // @formatter:off
@@ -43,8 +43,10 @@ public class GameOfLifeImpl implements GameOfLife {
                 dead(cell.getX() - 1, cell.getY()),                                         dead(cell.getX() + 1, cell.getY()),
                 dead(cell.getX() - 1, cell.getY() + 1), dead(cell.getX(), cell.getY() + 1), dead(cell.getX() + 1, cell.getY() + 1)
         )
-                .filter(it -> it.getX() >= 0 && it.getX() < width
-                           && it.getY() >= 0 && it.getY() < height)
+                .map(it -> Cell.of(
+                        it.getX() < 0 ? width - 1 : it.getX() >= width ? 0 : it.getX(),
+                        it.getY() < 0 ? height - 1 : it.getY() >= height ? 0 : it.getY(),
+                        it.isAlive()))
                 .mapToInt(item -> item.getX() + (width) * item.getY())
                 .mapToObj(list::get);
         // @formatter:om
@@ -57,5 +59,6 @@ public class GameOfLifeImpl implements GameOfLife {
             return neighbours == 3 ? cell.resurrect() : cell;
         }
     }
+
 
 }

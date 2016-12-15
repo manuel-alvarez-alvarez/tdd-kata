@@ -6,12 +6,15 @@ import com.netflix.eureka.EurekaServerContext;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
@@ -32,22 +35,34 @@ public class GameOfLifeMaster {
         private EurekaServerContext eurekaServerContext;
 
         @Resource
-        private GameOfLife gameOfLife;
+        private ApplicationContext applicationContext;
+
+        private Map<String, GameOfLife> instances;
+
+        @PostConstruct
+        public void setup() {
+            this.instances = Collections.unmodifiableMap(applicationContext.getBeansOfType(GameOfLife.class));
+        }
+
+        @GetMapping(value = "/", produces = MediaType.TEXT_HTML_VALUE)
+        public String index() {
+            return "redirect:index.html";
+        }
 
         @GetMapping(value = "/service", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
         @ResponseBody
-        public List<String> findServices() {
+        public List<InstanceInfo> findServices() {
             return Optional.ofNullable(eurekaServerContext.getRegistry().getApplication("GAME-OF-LIFE-CLIENT"))
                     .map(Application::getInstances)
                     .orElse(Collections.emptyList())
                     .stream()
-                    .map(InstanceInfo::getInstanceId)
                     .collect(Collectors.toList());
         }
 
         @PostMapping(value = "/service", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
         @ResponseBody
-        public Result invokeDefaultService(@RequestBody final String request, @RequestParam final int frames) throws IOException {
+        public Result invokeDefaultService(@RequestBody final String request, @RequestParam final int frames, @RequestParam final String mode) throws IOException {
+            GameOfLife gameOfLife = instances.get(mode);
             List<String> right = IntStream.range(0, frames).collect(
                     LinkedList::new,
                     (list, i) -> list.add(Cell.toWorld(gameOfLife.nextGeneration(Cell.ofWorld(i == 0 ? request : list.get(list.size() - 1))))),
@@ -57,7 +72,8 @@ public class GameOfLifeMaster {
 
         @PostMapping(value = "/service/{id}", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
         @ResponseBody
-        public Result invokeService(@RequestBody final String request, @PathVariable final String id, @RequestParam final int frames) throws IOException {
+        public Result invokeService(@RequestBody final String request, @PathVariable final String id, @RequestParam final int frames, @RequestParam final String mode) throws IOException {
+            GameOfLife gameOfLife = instances.get(mode);
             String serviceId = new String(Base64.getDecoder().decode(id));
             List<String> right = IntStream.range(0, frames).collect(
                     LinkedList::new,
@@ -65,13 +81,22 @@ public class GameOfLifeMaster {
                     LinkedList::addAll);
             return Optional.ofNullable(eurekaServerContext.getRegistry().getApplication("GAME-OF-LIFE-CLIENT"))
                     .map(application -> application.getByInstanceId(serviceId))
+                    .filter(instanceInfo -> instanceInfo.getStatus() == InstanceInfo.InstanceStatus.UP)
                     .map(instanceInfo -> {
-                        RestTemplate template = new RestTemplate();
-                        Map<String, Object> variables = new LinkedHashMap<>();
-                        variables.put("frames", frames);
-                        @SuppressWarnings("unchecked")
-                        List<String> computed = template.postForObject(instanceInfo.getHomePageUrl(), request, List.class, variables);
-                        return Result.ok(right, computed);
+                        try {
+                            RestTemplate template = new RestTemplate();
+                            Map<String, Object> variables = new LinkedHashMap<>();
+                            variables.put("frames", frames);
+                            @SuppressWarnings("unchecked")
+                            List<String> computed = template.postForObject(
+                                    String.format("%s?frames={frames}", instanceInfo.getHomePageUrl()),
+                                    request,
+                                    List.class,
+                                    variables);
+                            return Result.ok(right, computed);
+                        } catch(RestClientResponseException e) {
+                            return Result.fail(e.getRawStatusCode(), e.getResponseBodyAsString());
+                        }
                     })
                     .orElse(Result.fail(HttpStatus.NOT_FOUND.value(), String.format("No service %s found", serviceId)));
         }

@@ -7,8 +7,12 @@ eureka:
         fetchRegistry: false
         serviceUrl:
               defaultZone: http://malvarez.cern.ch/game-of-life/eureka/
+        healthcheck:
+            enabled: true
     server:
         waitTimeInMsWhenSyncEmpty: 0
+        enableSelfPreservation: false
+        eviction-interval-timer-in-ms: 10000
 
 ---
 

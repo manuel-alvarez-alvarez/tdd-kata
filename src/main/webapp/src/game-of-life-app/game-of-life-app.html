@@ -1,9 +1,10 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
-<link rel="stylesheet" href="../../bower_components/semantic/dist/semantic.min.css">
+<link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/font-roboto-local/roboto.html">
+<link rel="import" href="../../bower_components/paper-toggle-button/paper-toggle-button.html">
 <script src="../../bower_components/three.js/build/Three.js"></script>
-<script src="../../bower_components/jquery/dist/jquery.min.js"></script>
-<script src="../../bower_components/semantic/dist/semantic.min.js"></script>
 
 <link rel="import" href="game-of-life-field.html">
 
@@ -13,14 +14,279 @@
         <style>
             :host {
                 display: block;
+                width: 100%;
+                height: 100%;
+                font-family: Roboto;
             }
+
+            paper-progress {
+                --paper-progress-active-color: var(--paper-grey-700);
+            }
+
+            .loading-block {
+                height: 4px;
+            }
+
+            #error {
+                --paper-toast-background-color: var(--paper-red-700);
+                --paper-toast-color: white;
+            }
+
+            /* -------------------------------------- */
+
+            ol {
+                counter-reset: li;
+                list-style: none;
+                *list-style: decimal;
+                font: 15px 'trebuchet MS', 'lucida sans';
+                padding: 0;
+                text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
+            }
+
+            /* -------------------------------------- */
+
+            .rounded-list a {
+                position: relative;
+                display: block;
+                padding: .4em .4em .4em 2em;
+                *padding: .4em;
+                margin: .5em 0;
+                background: #ddd;
+                color: #444;
+                text-decoration: none;
+                -moz-border-radius: .3em;
+                -webkit-border-radius: .3em;
+                border-radius: .3em;
+                -webkit-transition: all .3s ease-out;
+                -moz-transition: all .3s ease-out;
+                -ms-transition: all .3s ease-out;
+                -o-transition: all .3s ease-out;
+                transition: all .3s ease-out;
+            }
+
+            .rounded-list a:hover {
+                background: #eee;
+            }
+
+            .rounded-list a:hover:before {
+                -moz-transform: rotate(360deg);
+                -webkit-transform: rotate(360deg);
+                -moz-transform: rotate(360deg);
+                -ms-transform: rotate(360deg);
+                -o-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+
+            .rounded-list a:before {
+                content: counter(li);
+                counter-increment: li;
+                position: absolute;
+                left: -1.3em;
+                top: 50%;
+                margin-top: -1.3em;
+                background: #87ceeb;
+                height: 2em;
+                width: 2em;
+                line-height: 2em;
+                border: .3em solid #fff;
+                text-align: center;
+                font-weight: bold;
+                -moz-border-radius: 2em;
+                -webkit-border-radius: 2em;
+                border-radius: 2em;
+                -webkit-transition: all .3s ease-out;
+                -moz-transition: all .3s ease-out;
+                -ms-transition: all .3s ease-out;
+                -o-transition: all .3s ease-out;
+                transition: all .3s ease-out;
+            }
+
+            /* -------------------------------------- */
+
+            .circle-list li {
+                padding: 2.5em;
+                border-bottom: 1px dashed #ccc;
+            }
+
+            .circle-list h2 {
+                position: relative;
+                margin: 0;
+            }
+
+            .circle-list p {
+                margin: 0;
+            }
+
+            .circle-list h2:before {
+                content: counter(li);
+                counter-increment: li;
+                position: absolute;
+                z-index: -1;
+                left: -1.3em;
+                top: -.8em;
+                background: #f5f5f5;
+                height: 1.5em;
+                width: 1.5em;
+                border: .1em solid rgba(0, 0, 0, .05);
+                text-align: center;
+                font: italic bold 1em/1.5em Georgia, Serif;
+                color: #ccc;
+                -moz-border-radius: 1.5em;
+                -webkit-border-radius: 1.5em;
+                border-radius: 1.5em;
+                -webkit-transition: all .2s ease-out;
+                -moz-transition: all .2s ease-out;
+                -ms-transition: all .2s ease-out;
+                -o-transition: all .2s ease-out;
+                transition: all .2s ease-out;
+            }
+
+            .circle-list li:hover h2:before {
+                background-color: #ffd797;
+                border-color: rgba(0, 0, 0, .08);
+                border-width: .2em;
+                color: #444;
+                -webkit-transform: scale(1.5);
+                -moz-transform: scale(1.5);
+                -ms-transform: scale(1.5);
+                -o-transform: scale(1.5);
+                transform: scale(1.5);
+            }
+
+            table, tr, td {
+                border-spacing: 0;
+            }
+
+            .wrapper {
+                margin: 3em 0;
+            }
+
+            .wrapper > a, .wrapper > a:visited, .wrapper > a:hover, .wrapper > a:active {
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                position: relative;
+                transition: 0.5s color ease;
+                text-decoration: none;
+                color: #81b3d2;
+                font-size: 1.5em;
+            }
+
+            .wrapper > a:hover {
+                color: #d73444;
+            }
+
+            .wrapper > a.before:before, .wrapper > a.after:after {
+                content: "";
+                transition: 0.5s all ease;
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                position: absolute;
+            }
+
+            .wrapper > a.before:before {
+                top: -0.25em;
+            }
+
+            .wrapper > a.after:after {
+                bottom: -0.25em;
+            }
+
+            .wrapper > a.before:before, .wrapper > a.after:after {
+                height: 5px;
+                height: 0.35rem;
+                width: 0;
+                background: #d73444;
+            }
+
+            .wrapper > a.first:after {
+                left: 0;
+            }
+
+            .wrapper > a.second:after {
+                right: 0;
+            }
+
+            .wrapper > a.third:after, .wrapper > a.sixth:before, .wrapper > a.sixth:after {
+                left: 50%;
+                -webkit-transform: translateX(-50%);
+                transform: translateX(-50%);
+            }
+
+            .wrapper > a.fourth:before, .wrapper > a.fourth:after {
+                left: 0;
+            }
+
+            .wrapper > a.fifth:before, .wrapper > a.fifth:after {
+                right: 0;
+            }
+
+            .wrapper > a.seventh:before {
+                right: 0;
+            }
+
+            .wrapper > a.seventh:after {
+                left: 0;
+            }
+
+            .wrapper > a.eigth:before {
+                left: 0;
+            }
+
+            .wrapper > a.eigth:after {
+                right: 0;
+            }
+
+            .wrapper > a.before:hover:before, .wrapper > a.after:hover:after {
+                width: 100%;
+            }
+
         </style>
 
+        <template is="dom-if" if="{{loading}}">
+            <paper-progress indeterminate class="slow" style="width: 100%"></paper-progress>
+        </template>
+        <template is="dom-if" if="{{!loading}}">
+            <div class="loading-block"></div>
+        </template>
+
+        <paper-toast id="error"></paper-toast>
+        <paper-toast id="info"></paper-toast>
+
+
         <iron-ajax id="ajax" method="GET" content-type="text/plain" url="/service" handle-as="json"
-                   on-response="_onServices"></iron-ajax>
+                   loading="{{loading}}"
+                   on-response="_onServices"
+                   on-error="_onError"></iron-ajax>
+
+        <div>
+            <table style="float: left; display: inline-block; border-spacing: 0">
+                <tr>
+                    <td style="text-align: center">
+                        <div class="wrapper">
+                            <a class="eigth before after"
+                               href="https://upload.wikimedia.org/wikipedia/commons/0/0b/TDD_Global_Lifecycle.png"
+                               target="_blank">Test Driven Development</a>
+                        </div>
+                    </td>
+                    <td rowspan="2" id="solution"></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 25px;">
+                        <span>Game of Life Kata</span>
+                        <ol class="rounded-list">
+                            <li><a href="#">Any live cell with fewer than two live neighbours dies</a></li>
+                            <li><a href="#">Any live cell with two live neighbours lives</a></li>
+                            <li><a href="#">Any live cell with three live neighbours lives</a></li>
+                            <li><a href="#">Any live cell with more than three live neighbours dies</a></li>
+                            <li><a href="#">Any dead cell with three live neighbours resurrects</a></li>
+                        </ol>
+                        <paper-toggle-button checked="{{wrap}}">Enable wrapping</paper-toggle-button>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
         <div id="container">
-            <game-of-life-field cells="{{cells}}"/>
         </div>
 
     </template>
@@ -30,8 +296,27 @@
             is: 'game-of-life-app',
 
             properties: {
+
+                loading: {
+                    type: Boolean,
+                    notify: true,
+                    value: false
+                },
+
+                wrap: {
+                    type: Boolean,
+                    value: false,
+                    observer: '_wrapChanged'
+                },
+
+                mode: {
+                    type: String,
+                    computed: "_getMode(wrap)"
+                },
+
                 cells: {
-                    type: String
+                    type: String,
+                    computed: "_getCells(wrap)"
                 }
             },
 
@@ -41,15 +326,14 @@
             },
 
             _fetchServices: function (self) {
-                return function() {
-                    self.$.ajax.body = atob(self.cells);
+                return function () {
                     self.$.ajax.generateRequest();
-                    setTimeout(self._fetchServices(self), 1000);
+                    setTimeout(self._fetchServices(self), 5000);
                 };
             },
 
             _onServices: function (e, detail) {
-                var field, i;
+                var field, serviceId, hostName, i;
                 var services = detail.xhr.response;
                 var root = Polymer.dom(this.root);
                 var fields = root.querySelectorAll("game-of-life-field");
@@ -57,24 +341,101 @@
                 for (i in fields) {
                     field = fields[i];
                     var id = field.getAttribute("service-id");
-                    if (id) {
-                        fieldMap[id] = field;
-                    }
+                    id = id === undefined || id === null ? "" : id;
+                    fieldMap[id] = field;
+                }
+                if (!fieldMap.hasOwnProperty("")) {
+                    field = document.createElement("game-of-life-field");
+                    field.setAttribute("host-name", "Solution");
+                    field.setAttribute("cells", this.cells);
+                    field.setAttribute("mode", this.mode);
+                    field.setAttribute("solution", true);
+                    this.$.solution.appendChild(field);
+                } else {
+                    delete fieldMap[""];
                 }
                 for (i in services) {
-                    var serviceId = services[i];
-                    field = fieldMap[id];
+                    serviceId = services[i].instanceId;
+                    hostName = services[i].hostName;
+                    field = fieldMap[serviceId];
                     if (!field) {
                         field = document.createElement("game-of-life-field");
                         field.setAttribute("service-id", serviceId);
+                        field.setAttribute("host-name", hostName);
                         field.setAttribute("cells", this.cells);
-                        root.appendChild(field);
+                        field.setAttribute("mode", this.mode);
+                        this.$.container.appendChild(field);
+
+                        this.$.info.text = hostName + " : connected";
+                        this.$.info.show();
                     } else {
                         delete fieldMap[serviceId];
                     }
                 }
-                for (field in fieldMap) {
-                    root.removeChild(fieldMap[field]);
+                for (serviceId in fieldMap) {
+                    field = fieldMap[serviceId];
+                    hostName = field.getAttribute("host-name");
+                    this.$.container.removeChild(field);
+                    this.$.info.text = hostName + " : disconnected";
+                    this.$.info.show();
+                }
+            },
+
+            _onError: function () {
+                this.$.error.text = "Error loading the list of services";
+                this.$.error.show();
+            },
+
+            _getMode: function () {
+                return this.wrap ? "wrap" : "no-wrap";
+            },
+
+            _getCells: function () {
+                var result;
+                if (this.wrap) {
+                    result = "...................O.O\n" +
+                            "...................OO.\n" +
+                            "....................O.\n" +
+                            "......................\n" +
+                            "......................\n" +
+                            "......................\n" +
+                            "...O..................\n" +
+                            "..O...................\n" +
+                            "..OOO.................\n" +
+                            "......................\n" +
+                            "......................\n" +
+                            "......................\n" +
+                            "......................\n" +
+                            ".....O................\n" +
+                            ".....O.O..............\n" +
+                            ".....OO...............";
+                } else {
+                    result = "........................\n" +
+                            "........................\n" +
+                            "........................\n" +
+                            "....O..............O....\n" +
+                            "....O..............O....\n" +
+                            "...O.O............O.O...\n" +
+                            "....O..............O....\n" +
+                            "....O......O.......O....\n" +
+                            "....O......OO......O....\n" +
+                            "....O......OO......O....\n" +
+                            "...O.O......O.....O.O...\n" +
+                            "....O..............O....\n" +
+                            "....O..............O....\n" +
+                            "........................\n" +
+                            "........................\n" +
+                            "........................";
+                }
+                return btoa(result);
+            },
+
+            _wrapChanged: function () {
+                var root = Polymer.dom(this.root);
+                var fields = root.querySelectorAll("game-of-life-field");
+                for (var i in fields) {
+                    var field = fields[i];
+                    field.parentElement.removeChild(field);
                 }
             }
         });
