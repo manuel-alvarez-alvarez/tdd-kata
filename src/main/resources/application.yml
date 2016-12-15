@@ -6,6 +6,13 @@ spring:
         name: game-of-life-client
 
 eureka:
+    instance:
+        leaseRenewalIntervalInSeconds: 1
+        leaseExpirationDurationInSeconds: 2
+    healthcheck:
+        enabled: true
+    lease:
+        duration: 5
     client:
         serviceUrl:
             defaultZone: http://malvarez.cern.ch/game-of-life/eureka/

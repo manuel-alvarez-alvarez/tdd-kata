@@ -35,7 +35,7 @@ public interface GameOfLife {
                 return Stream.empty();
             }
             List<Cell> list = new LinkedList<>(world);
-            int width = list.stream().mapToInt(Cell::getX).max().orElse(0) + 1;
+            int width = list.get(list.size() - 1).getX() + 1;
             int height = list.size() / width;
 
             // @formatter:off
