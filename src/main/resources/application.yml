@@ -15,7 +15,7 @@ eureka:
         duration: 5
     client:
         serviceUrl:
-            defaultZone: http://malvarez.cern.ch/game-of-life/eureka/
+            defaultZone: http://malvarez.cern.ch:8080/game-of-life/eureka/
 
 ---
 
